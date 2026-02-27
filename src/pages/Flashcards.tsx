@@ -1,160 +1,174 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, RefreshCw, Layers } from 'lucide-react';
-import { useAppContext } from '../context/AppContext';
+    import { useMaterials } from '../context/MaterialContext';
+    import EmptyState from '../components/EmptyState';
+    import { motion, AnimatePresence } from 'framer-motion';
+    import { Zap, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
 
-// Mock generated content to simulate AI response
-const MOCK_FLASHCARDS = [
-  { id: 1, q: "What is the Virtual DOM in React?", a: "A lightweight JavaScript representation of the actual DOM used to optimize rendering performance." },
-  { id: 2, q: "Explain the useEffect hook.", a: "A hook that lets you perform side effects in functional components, such as data fetching or subscriptions." },
-  { id: 3, q: "What is Prop Drilling?", a: "The process of passing data through multiple layers of nested components, even if intermediate components don't need the data." },
-  { id: 4, q: "Define Context API.", a: "A React feature that allows sharing state across the entire app (or part of it) without passing props manually down every level." },
-];
-
-export default function Flashcards() {
-  const { activeMaterialId, materials } = useAppContext();
-  const activeMaterial = materials.find(m => m.id === activeMaterialId);
-  
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isFlipped, setIsFlipped] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [hasGenerated, setHasGenerated] = useState(false);
-
-  const handleGenerate = () => {
-    setIsGenerating(true);
-    // Simulate AI delay
-    setTimeout(() => {
-      setIsGenerating(false);
-      setHasGenerated(true);
-    }, 1500);
-  };
-
-  const nextCard = () => {
-    if (currentIndex < MOCK_FLASHCARDS.length - 1) {
-      setIsFlipped(false);
-      setTimeout(() => setCurrentIndex(prev => prev + 1), 150);
+    interface Flashcard {
+      id: string;
+      question: string;
+      answer: string;
     }
-  };
 
-  const prevCard = () => {
-    if (currentIndex > 0) {
-      setIsFlipped(false);
-      setTimeout(() => setCurrentIndex(prev => prev - 1), 150);
-    }
-  };
+    export default function Flashcards() {
+      const { activeMaterial } = useMaterials();
+      const [isGenerating, setIsGenerating] = useState(false);
+      const [cards, setCards] = useState<Flashcard[]>([]);
+      const [currentIndex, setCurrentIndex] = useState(0);
+      const [isFlipped, setIsFlipped] = useState(false);
 
-  if (!activeMaterialId) {
-    return (
-      <div className="h-[60vh] flex flex-col items-center justify-center text-center max-w-md mx-auto">
-        <div className="w-20 h-20 rounded-full bg-card border border-border flex items-center justify-center mb-6 shadow-xl">
-          <Layers size={32} className="text-muted-foreground" />
-        </div>
-        <h2 className="text-2xl font-bold text-white mb-3">No Context Selected</h2>
-        <p className="text-muted-foreground mb-8">
-          You need to select an active study material before the AI can generate personalized flashcards.
-        </p>
-      </div>
-    );
-  }
+      if (!activeMaterial) {
+        return (
+          <EmptyState 
+            title="No Active Material" 
+            description="You need to select or upload a study material first to generate AI flashcards."
+          />
+        );
+      }
 
-  if (!hasGenerated) {
-    return (
-      <div className="h-[60vh] flex flex-col items-center justify-center text-center max-w-lg mx-auto">
-        <h2 className="text-3xl font-bold text-white mb-4">Generate Flashcards</h2>
-        <p className="text-muted-foreground mb-8 text-lg">
-          AI will analyze <span className="text-white font-medium">"{activeMaterial?.title}"</span> and extract key concepts into a reviewable flashcard deck.
-        </p>
-        <button
-          onClick={handleGenerate}
-          disabled={isGenerating}
-          className="px-8 py-4 rounded-full bg-accent text-white font-semibold text-lg hover:bg-accent/90 hover:shadow-[0_0_30px_rgba(138,43,226,0.4)] transition-all flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isGenerating ? (
-            <>
-              <RefreshCw className="animate-spin" size={24} />
-              Analyzing Material...
-            </>
+      const generateCards = () => {
+        setIsGenerating(true);
+        // Simulate API call to OpenAI
+        setTimeout(() => {
+          setCards([
+            { id: '1', question: 'What is the main topic of this material?', answer: `The primary subject is ${activeMaterial.title}.` },
+            { id: '2', question: 'Can you summarize a key point from the text?', answer: 'It discusses fundamental principles that form the basis of the subject matter covered in the notes.' },
+            { id: '3', question: 'Why is this material significant?', answer: 'Because it provides foundational knowledge required to master more advanced concepts in this field.' },
+          ]);
+          setIsGenerating(false);
+          setCurrentIndex(0);
+          setIsFlipped(false);
+        }, 2000);
+      };
+
+      const handleNext = () => {
+        setIsFlipped(false);
+        setTimeout(() => {
+          setCurrentIndex((prev) => (prev + 1) % cards.length);
+        }, 150);
+      };
+
+      const handlePrev = () => {
+        setIsFlipped(false);
+        setTimeout(() => {
+          setCurrentIndex((prev) => (prev - 1 + cards.length) % cards.length);
+        }, 150);
+      };
+
+      return (
+        <div className="max-w-4xl mx-auto pb-12">
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+            <div>
+              <h1 className="text-3xl font-bold font-sans mb-2">Flashcards</h1>
+              <p className="text-muted-foreground flex items-center">
+                Generating from: <span className="font-medium text-foreground ml-1 truncate max-w-[200px] inline-block">{activeMaterial.title}</span>
+              </p>
+            </div>
+            {cards.length > 0 && (
+              <button 
+                onClick={generateCards}
+                className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors flex items-center shadow-sm"
+              >
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Regenerate
+              </button>
+            )}
+          </div>
+
+          {cards.length === 0 ? (
+            <div className="bg-card border border-border rounded-2xl p-12 text-center shadow-sm max-w-2xl mx-auto mt-12">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Zap className="w-8 h-8 text-primary" />
+              </div>
+              <h2 className="text-2xl font-bold mb-4">Generate AI Flashcards</h2>
+              <p className="text-muted-foreground mb-8">
+                Our AI will analyze <strong>"{activeMaterial.title}"</strong> and create a custom deck of flashcards to test your knowledge.
+              </p>
+              <button
+                onClick={generateCards}
+                disabled={isGenerating}
+                className="px-8 py-3 bg-primary text-primary-foreground rounded-full font-medium hover:bg-primary/90 transition-all hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center mx-auto w-full sm:w-auto"
+              >
+                {isGenerating ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin mr-3" />
+                    Analyzing material...
+                  </>
+                ) : (
+                  <>
+                    <Zap className="w-5 h-5 mr-2" />
+                    Generate Flashcards
+                  </>
+                )}
+              </button>
+            </div>
           ) : (
-            <>
-              <Layers size={24} />
-              Generate Deck
-            </>
+            <div className="max-w-2xl mx-auto mt-8">
+              <div className="flex justify-between text-sm font-medium text-muted-foreground mb-4 px-2">
+                <span>Card {currentIndex + 1} of {cards.length}</span>
+                <span>Click card to flip</span>
+              </div>
+
+              {/* Flashcard 3D Flip Container */}
+              <div 
+                className="relative w-full aspect-[4/3] sm:aspect-video cursor-pointer"
+                onClick={() => setIsFlipped(!isFlipped)}
+                style={{ perspective: '1000px' }}
+              >
+                <motion.div
+                  className="w-full h-full relative preserve-3d"
+                  animate={{ rotateX: isFlipped ? 180 : 0 }}
+                  transition={{ duration: 0.4, type: "spring", stiffness: 200, damping: 20 }}
+                  style={{ transformStyle: 'preserve-3d' }}
+                >
+                  {/* Front (Question) */}
+                  <div 
+                    className="absolute inset-0 w-full h-full bg-card border border-border rounded-2xl shadow-md flex flex-col items-center justify-center p-8 text-center"
+                    style={{ backfaceVisibility: 'hidden' }}
+                  >
+                    <span className="absolute top-4 left-4 text-xs font-bold uppercase tracking-widest text-primary/50">Question</span>
+                    <h3 className="text-xl md:text-2xl font-medium text-foreground leading-relaxed">
+                      {cards[currentIndex].question}
+                    </h3>
+                  </div>
+
+                  {/* Back (Answer) */}
+                  <div 
+                    className="absolute inset-0 w-full h-full bg-primary/5 border border-primary/20 rounded-2xl shadow-md flex flex-col items-center justify-center p-8 text-center"
+                    style={{ backfaceVisibility: 'hidden', transform: 'rotateX(180deg)' }}
+                  >
+                    <span className="absolute top-4 left-4 text-xs font-bold uppercase tracking-widest text-primary/50">Answer</span>
+                    <p className="text-lg md:text-xl text-foreground leading-relaxed">
+                      {cards[currentIndex].answer}
+                    </p>
+                  </div>
+                </motion.div>
+              </div>
+
+              <div className="flex items-center justify-between mt-8">
+                <button 
+                  onClick={handlePrev}
+                  className="p-3 bg-secondary text-secondary-foreground rounded-full hover:bg-secondary/80 transition-colors disabled:opacity-50"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                <div className="flex space-x-2">
+                  {cards.map((_, idx) => (
+                    <div 
+                      key={idx} 
+                      className={`w-2 h-2 rounded-full transition-colors ${idx === currentIndex ? 'bg-primary' : 'bg-border'}`}
+                    />
+                  ))}
+                </div>
+                <button 
+                  onClick={handleNext}
+                  className="p-3 bg-secondary text-secondary-foreground rounded-full hover:bg-secondary/80 transition-colors disabled:opacity-50"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
           )}
-        </button>
-      </div>
-    );
-  }
-
-  const currentCard = MOCK_FLASHCARDS[currentIndex];
-
-  return (
-    <div className="max-w-3xl mx-auto space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Review Session</h1>
-          <p className="text-sm text-accent bg-accent/10 px-3 py-1 rounded-full inline-block border border-accent/20">
-            Context: {activeMaterial?.title}
-          </p>
         </div>
-        <div className="text-muted-foreground font-mono text-sm">
-          Card {currentIndex + 1} of {MOCK_FLASHCARDS.length}
-        </div>
-      </div>
-
-      <div className="relative perspective-1000 h-[400px] w-full mt-10">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentIndex + (isFlipped ? '-flipped' : '-front')}
-            initial={{ opacity: 0, rotateX: isFlipped ? -90 : 90 }}
-            animate={{ opacity: 1, rotateX: 0 }}
-            exit={{ opacity: 0, rotateX: isFlipped ? 90 : -90 }}
-            transition={{ duration: 0.3 }}
-            onClick={() => setIsFlipped(!isFlipped)}
-            className={`absolute inset-0 rounded-3xl border cursor-pointer p-10 flex flex-col items-center justify-center text-center shadow-2xl transition-colors duration-300 ${
-              isFlipped 
-                ? 'bg-accent border-accent text-white' 
-                : 'bg-card border-border hover:border-accent/50 text-white'
-            }`}
-          >
-            <span className="absolute top-6 left-8 text-xs font-bold uppercase tracking-widest opacity-50">
-              {isFlipped ? 'Answer' : 'Question'}
-            </span>
-            <h3 className={`text-2xl lg:text-3xl font-medium leading-relaxed ${isFlipped ? 'text-white' : 'text-gray-100'}`}>
-              {isFlipped ? currentCard.a : currentCard.q}
-            </h3>
-            <span className="absolute bottom-6 text-sm opacity-50">
-              Click card to flip
-            </span>
-          </motion.div>
-        </AnimatePresence>
-      </div>
-
-      <div className="flex items-center justify-center gap-6 mt-8">
-        <button
-          onClick={prevCard}
-          disabled={currentIndex === 0}
-          className="p-4 rounded-full bg-card border border-border hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-white"
-        >
-          <ChevronLeft size={24} />
-        </button>
-        <div className="flex gap-2">
-          {MOCK_FLASHCARDS.map((_, idx) => (
-            <div 
-              key={idx}
-              className={`h-2 rounded-full transition-all duration-300 ${
-                idx === currentIndex ? 'w-8 bg-accent shadow-[0_0_10px_rgba(138,43,226,0.6)]' : 'w-2 bg-white/20'
-              }`}
-            />
-          ))}
-        </div>
-        <button
-          onClick={nextCard}
-          disabled={currentIndex === MOCK_FLASHCARDS.length - 1}
-          className="p-4 rounded-full bg-card border border-border hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-white"
-        >
-          <ChevronRight size={24} />
-        </button>
-      </div>
-    </div>
-  );
-}
+      );
+    }
