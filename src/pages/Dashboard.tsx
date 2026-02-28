@@ -22,14 +22,8 @@ import React from 'react';
             animate={{ opacity: 1, y: 0 }}
             className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4 flex items-start space-x-3"
           >
-            <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-            <div>
-              <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-300">System Notice</h3>
-              <p className="text-sm text-blue-700 dark:text-blue-400 mt-1">
-                Please connect Supabase to enable the related functionality (Auth, Storage, and Real Database Sync). 
-                The current interface operates with local state for demonstration purposes.
-              </p>
-            </div>
+           
+            
           </motion.div>
 
           <div>
