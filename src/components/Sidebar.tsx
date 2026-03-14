@@ -9,7 +9,7 @@ import React from 'react';
         { path: '/flashcards', label: 'Flashcards', icon: Layers },
         { path: '/quiz', label: 'Quiz', icon: HelpCircle },
         { path: '/chat', label: 'AI Chat', icon: MessageSquare },
-        { path: '/comm', label: 'Sudent Community', icon: MessageSquare },
+        { path: '/comm', label: 'Student Community', icon: MessageSquare },
       ];
 
       return (
